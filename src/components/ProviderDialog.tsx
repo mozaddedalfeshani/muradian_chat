@@ -87,6 +87,8 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
       setModel(selectedModel);
     } else {
       setApiKey(selectedProvider, apiKey);
+      if (selectedProvider === "openrouter")
+        setModel("google/gemini-2.0-flash-exp:free");
       if (selectedProvider === "openai") setModel("gpt-4o");
       if (selectedProvider === "anthropic")
         setModel("claude-3-5-sonnet-latest");
@@ -122,6 +124,7 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ollama">Ollama (Local)</SelectItem>
+                <SelectItem value="openrouter">OpenRouter</SelectItem>
                 <SelectItem value="openai">OpenAI</SelectItem>
                 <SelectItem value="anthropic">Anthropic</SelectItem>
                 <SelectItem value="google">Google Gemini</SelectItem>

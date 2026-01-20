@@ -6,7 +6,13 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 import { Loader2, Brain, Globe, Paperclip, ArrowUp } from "lucide-react";
 import { chatWithOllama } from "../lib/ollamaChat";
+import {
+  chatWithOpenRouter,
+  fetchOpenRouterModels,
+} from "../lib/openRouterChat";
 import { useAppStore as updateAppStore } from "../store/appStore";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { ChevronDown } from "lucide-react";
 
 const ChatApp: React.FC = () => {
   const {
@@ -15,13 +21,21 @@ const ChatApp: React.FC = () => {
     model,
     chats,
     currentChatId,
-    addMessage,
     addChat,
+    addMessage,
+    setModel,
   } = useAppStore();
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
+  const [openRouterModels, setOpenRouterModels] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (provider === "openrouter") {
+      fetchOpenRouterModels().then(setOpenRouterModels);
+    }
+  }, [provider]);
 
   // Get current chat messages
   const currentChat = chats.find((c) => c.id === currentChatId);
@@ -106,6 +120,23 @@ const ChatApp: React.FC = () => {
             })
             .catch((err) => console.error("Failed to generate title:", err));
         }
+      } else if (provider === "openrouter") {
+        const apiKey = useAppStore.getState().apiKeys[provider];
+        if (!apiKey) throw new Error("API Key not found");
+
+        const contextMessages = updatedMessages.slice(-20);
+        let accumulatedContent = "";
+
+        await chatWithOpenRouter(model, apiKey, contextMessages, (chunk) => {
+          accumulatedContent += chunk;
+          setStreamingContent(accumulatedContent);
+        });
+
+        addMessage(activeChatId!, {
+          role: "assistant",
+          content: accumulatedContent,
+        });
+        setStreamingContent("");
       } else {
         // Other providers (TODO: implement)
         addMessage(activeChatId!, {
@@ -227,6 +258,45 @@ const ChatApp: React.FC = () => {
                     </div>
 
                     <div className="flex gap-2 items-center">
+                      {provider === "openrouter" && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 gap-1 text-xs font-normal text-muted-foreground hover:text-foreground">
+                              {model || "Select Model"}
+                              <ChevronDown className="h-3 w-3" />
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-64 p-2" align="start">
+                            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+                              {openRouterModels.length > 0 ? (
+                                openRouterModels.map((m) => (
+                                  <Button
+                                    key={m}
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`w-full justify-start text-xs ${
+                                      model === m ? "bg-accent" : ""
+                                    }`}
+                                    onClick={() =>
+                                      updateAppStore.getState().setModel(m)
+                                    }>
+                                    {m}
+                                  </Button>
+                                ))
+                              ) : (
+                                <div className="text-xs text-center text-muted-foreground py-2">
+                                  Loading models...
+                                </div>
+                              )}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"

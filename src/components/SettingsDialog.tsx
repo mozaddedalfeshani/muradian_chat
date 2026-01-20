@@ -66,6 +66,8 @@ const SettingsDialog: React.FC = () => {
       setModel(localModel);
     } else {
       setApiKey(localProvider, localApiKey);
+      if (localProvider === "openrouter")
+        setModel("google/gemini-2.0-flash-exp:free");
       if (localProvider === "openai") setModel("gpt-4o");
     }
     setOpen(false);
@@ -103,6 +105,7 @@ const SettingsDialog: React.FC = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ollama">Ollama</SelectItem>
+                <SelectItem value="openrouter">OpenRouter</SelectItem>
                 <SelectItem value="openai">OpenAI</SelectItem>
                 <SelectItem value="anthropic">Anthropic</SelectItem>
                 <SelectItem value="google">Google Gemini</SelectItem>
