@@ -3,7 +3,14 @@ import { useAppStore } from "../store/appStore";
 import ProviderDialog from "./ProviderDialog";
 import Sidebar from "./Sidebar";
 import ChatPane from "./chat/ChatPane";
-import { DndContext, DragEndEvent, useDroppable } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragEndEvent,
+  useDroppable,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import {
   ResizablePanelGroup,
   ResizablePanel,
@@ -25,6 +32,14 @@ const ChatApp: React.FC = () => {
   } = useAppStore();
 
   const [showDropZones, setShowDropZones] = useState(false);
+
+  // Configure sensors for drag detection
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8, // Minimum drag distance before activation
+    },
+  });
+  const sensors = useSensors(pointerSensor);
 
   const handleDragStart = () => {
     setShowDropZones(true);
@@ -56,7 +71,10 @@ const ChatApp: React.FC = () => {
   };
 
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}>
       <div className="flex h-screen bg-background overflow-hidden">
         {!hasCompletedSetup ? (
           <ProviderDialog open={true} />
