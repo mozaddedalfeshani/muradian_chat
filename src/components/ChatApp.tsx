@@ -180,7 +180,7 @@ const ChatApp: React.FC = () => {
 
                   <div className="flex justify-between items-end">
                     <div className="flex gap-2">
-                      <Button
+                      {/* <Button
                         type="button"
                         variant="outline"
                         size="sm"
@@ -195,7 +195,7 @@ const ChatApp: React.FC = () => {
                         className="rounded-full h-8 px-3 text-xs gap-1.5 font-medium border-border/50 bg-background/50 hover:bg-background/80">
                         <Globe className="h-3.5 w-3.5" />
                         Search
-                      </Button>
+                      </Button> */}
                     </div>
 
                     <div className="flex gap-2 items-center">
