@@ -1,20 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAppStore, type Message } from "../store/appStore";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import ProviderDialog from "./ProviderDialog";
 import Sidebar from "./Sidebar";
-import { Button } from "./ui/button";
-import { Textarea } from "./ui/textarea";
-import { Loader2, Brain, Globe, Paperclip, ArrowUp } from "lucide-react";
 import { chatWithOllama } from "../lib/ollamaChat";
 import {
   chatWithOpenRouter,
   fetchOpenRouterModels,
 } from "../lib/openRouterChat";
 import { useAppStore as updateAppStore } from "../store/appStore";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { ChevronDown, Check, Search } from "lucide-react";
+import ChatHeader from "./chat/ChatHeader";
+import MessageList from "./chat/MessageList";
+import ChatInput from "./chat/ChatInput";
 
 const ChatApp: React.FC = () => {
   const {
@@ -31,12 +27,7 @@ const ChatApp: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [openRouterModels, setOpenRouterModels] = useState<string[]>([]);
-  const [modelSearch, setModelSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const filteredModels = openRouterModels.filter((m) =>
-    m.toLowerCase().includes(modelSearch.toLowerCase()),
-  );
 
   useEffect(() => {
     if (provider === "openrouter") {
@@ -101,7 +92,6 @@ const ChatApp: React.FC = () => {
         });
         setStreamingContent("");
 
-        // Auto-generate title if this is the first message
         // Auto-generate title after first few messages (using last 3 messages for context)
         const totalMessages = updatedMessages.length + 1; // +1 for the new assistant response
         if (totalMessages <= 4 && totalMessages > 1) {
@@ -171,190 +161,25 @@ const ChatApp: React.FC = () => {
           <Sidebar />
 
           <div className="flex-1 flex flex-col h-full relative">
-            {/* Header */}
-            <header className="border-b bg-background p-4 flex items-center gap-3">
-              <span className="text-2xl">🤖</span>
-              <div>
-                <h1 className="text-xl font-semibold leading-none">
-                  Muradian AI
-                </h1>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Provider: {provider} | Model: {model}
-                </p>
-              </div>
-            </header>
+            <ChatHeader />
 
-            {/* Messages Area */}
-            <div className="flex-1 overflow-auto p-4 space-y-4">
-              {messages.length === 0 && !streamingContent && (
-                <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
-                  <span className="text-4xl mb-4">💬</span>
-                  <p>Start a conversation...</p>
-                </div>
-              )}
-              {messages.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[75%] rounded-lg px-4 py-2 ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted prose dark:prose-invert prose-sm max-w-none break-words"
-                    }`}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {msg.content}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              ))}
-              {loading && streamingContent && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2 max-w-[75%] prose dark:prose-invert prose-sm max-w-none break-words">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {streamingContent}
-                    </ReactMarkdown>
-                    <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
-                  </div>
-                </div>
-              )}
-              {loading && !streamingContent && (
-                <div className="flex justify-start">
-                  <div className="bg-muted rounded-lg px-4 py-2 flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Thinking...
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+            <MessageList
+              messages={messages}
+              loading={loading}
+              streamingContent={streamingContent}
+              messagesEndRef={messagesEndRef}
+            />
 
-            {/* Input Area */}
-            <div className="p-4 bg-background">
-              <div className="w-full">
-                <form
-                  onSubmit={handleSend}
-                  className="flex flex-col gap-2 bg-muted/50 rounded-2xl p-4 border border-border/50 focus-within:ring-1 focus-within:ring-ring transition-all">
-                  <Textarea
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend(e);
-                      }
-                    }}
-                    placeholder="Message DeepSeek"
-                    className="min-h-[60px] max-h-[200px] border-none bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 shadow-none text-base"
-                    autoFocus
-                  />
-
-                  <div className="flex justify-between items-end">
-                    <div className="flex gap-2">
-                      {/* <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full h-8 px-3 text-xs gap-1.5 font-medium border-border/50 bg-background/50 hover:bg-background/80">
-                        <Brain className="h-3.5 w-3.5" />
-                        DeepThink
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full h-8 px-3 text-xs gap-1.5 font-medium border-border/50 bg-background/50 hover:bg-background/80">
-                        <Globe className="h-3.5 w-3.5" />
-                        Search
-                      </Button> */}
-                    </div>
-
-                    <div className="flex gap-2 items-center">
-                      {provider === "openrouter" && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 gap-1 text-xs font-normal text-muted-foreground hover:text-foreground">
-                              {model || "Select Model"}
-                              <ChevronDown className="h-3 w-3" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-[300px] p-0"
-                            align="start">
-                            <div className="p-2 border-b sticky top-0 bg-background z-10">
-                              <div className="flex items-center px-2 border rounded-md bg-muted/50">
-                                <Search className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <input
-                                  className="flex h-9 w-full rounded-md bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                  placeholder="Search models..."
-                                  value={modelSearch}
-                                  onChange={(e) =>
-                                    setModelSearch(e.target.value)
-                                  }
-                                />
-                              </div>
-                            </div>
-                            <div className="p-1 max-h-[300px] overflow-y-auto">
-                              {filteredModels.length > 0 ? (
-                                filteredModels.map((m) => (
-                                  <Button
-                                    key={m}
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`w-full justify-between font-normal text-xs ${
-                                      model === m
-                                        ? "bg-accent text-accent-foreground"
-                                        : ""
-                                    }`}
-                                    onClick={() => {
-                                      setModel(m);
-                                      // Optional: close popover here if we controlled open state
-                                    }}>
-                                    <span className="truncate text-left">
-                                      {m}
-                                    </span>
-                                    {model === m && (
-                                      <Check className="h-3 w-3 ml-2 shrink-0" />
-                                    )}
-                                  </Button>
-                                ))
-                              ) : (
-                                <div className="text-xs text-center text-muted-foreground py-4">
-                                  No models found
-                                </div>
-                              )}
-                            </div>
-                          </PopoverContent>
-                        </Popover>
-                      )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full h-8 w-8 text-muted-foreground hover:bg-muted">
-                        <Paperclip className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={loading || !inputValue.trim()}
-                        className="rounded-full h-8 w-8 p-0">
-                        <ArrowUp className="h-4 w-4" />
-                        <span className="sr-only">Send</span>
-                      </Button>
-                    </div>
-                  </div>
-                </form>
-
-                {/* <div className="mt-2 text-center text-xs text-muted-foreground">
-                  Context:{" "}
-                  <span className="font-mono">{messages.length} messages</span>
-                </div> */}
-              </div>
-            </div>
+            <ChatInput
+              inputValue={inputValue}
+              setInputValue={setInputValue}
+              handleSend={handleSend}
+              loading={loading}
+              provider={provider}
+              model={model}
+              models={openRouterModels}
+              setModel={setModel}
+            />
           </div>
 
           <ProviderDialog open={!hasCompletedSetup} />
