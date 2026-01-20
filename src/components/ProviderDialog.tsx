@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, Download } from "lucide-react";
 import { useAppStore } from "../store/appStore";
 import {
   checkOllamaInstalled,
   getOllamaModels,
   installOllama,
+  pullOllamaModel,
 } from "../lib/ollama";
 import {
   Dialog,
@@ -29,6 +30,8 @@ interface ProviderDialogProps {
   open: boolean;
 }
 
+const DEFAULT_MODEL = "deepseek-r1:1.5b";
+
 const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
   const { setProvider, setModel, setApiKey, completeSetup } = useAppStore();
 
@@ -40,6 +43,8 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
   const [installing, setInstalling] = useState(false);
   const [installProgress, setInstallProgress] = useState(0);
   const [loadingModels, setLoadingModels] = useState(false);
+  const [pullingModel, setPullingModel] = useState(false);
+  const [pullProgress, setPullProgress] = useState(0);
 
   useEffect(() => {
     if (selectedProvider === "ollama") {
@@ -81,6 +86,33 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
     }
   };
 
+  const handlePullDefaultModel = async () => {
+    setPullingModel(true);
+    setPullProgress(10);
+
+    const interval = setInterval(() => {
+      setPullProgress((prev) => Math.min(prev + 5, 90));
+    }, 1000);
+
+    const success = await pullOllamaModel(DEFAULT_MODEL);
+
+    clearInterval(interval);
+    setPullProgress(100);
+
+    if (success) {
+      // Refresh models list after pull
+      const models = await getOllamaModels();
+      setOllamaModels(models);
+      if (models.length > 0) {
+        setSelectedModel(
+          models.includes(DEFAULT_MODEL) ? DEFAULT_MODEL : models[0],
+        );
+      }
+    }
+
+    setPullingModel(false);
+  };
+
   const handleSave = () => {
     setProvider(selectedProvider);
 
@@ -107,7 +139,7 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
     <Dialog open={open}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Welcome to AI Chat</DialogTitle>
+          <DialogTitle>Welcome to MOSP Chat</DialogTitle>
           <DialogDescription>
             Choose your AI provider to get started. You can change this later in
             settings.
@@ -143,19 +175,17 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
               ) : ollamaInstalled === false ? (
                 <div className="space-y-3">
                   <p className="text-sm text-amber-600 font-medium">
-                    Ollama is not installed or not found.
+                    Ollama is not installed or not running.
                   </p>
                   {installing ? (
                     <div className="space-y-1">
                       <Progress value={installProgress} />
                       <p className="text-xs text-center text-muted-foreground">
-                        Installing...
+                        Opening download page...
                       </p>
                     </div>
                   ) : (
-                    <Button
-                      onClick={handleInstallOllama}
-                      className="w-full inline-flex justify-center text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+                    <Button onClick={handleInstallOllama} className="w-full">
                       Install Ollama
                     </Button>
                   )}
@@ -169,12 +199,33 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
                   <div className="grid gap-2">
                     <Label>Model</Label>
                     {loadingModels ? (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-3 w-3 animate-spin" />
                         Loading models...
                       </div>
                     ) : ollamaModels.length === 0 ? (
-                      <div className="text-xs text-red-500">
-                        No models found. Run 'ollama pull llama3' in terminal.
+                      <div className="space-y-3">
+                        <p className="text-sm text-amber-600">
+                          No models found. Would you like to download{" "}
+                          <strong>{DEFAULT_MODEL}</strong>?
+                        </p>
+                        {pullingModel ? (
+                          <div className="space-y-1">
+                            <Progress value={pullProgress} />
+                            <p className="text-xs text-center text-muted-foreground">
+                              Downloading {DEFAULT_MODEL}... This may take a few
+                              minutes.
+                            </p>
+                          </div>
+                        ) : (
+                          <Button
+                            onClick={handlePullDefaultModel}
+                            variant="outline"
+                            className="w-full">
+                            <Download className="h-4 w-4 mr-2" />
+                            Download {DEFAULT_MODEL}
+                          </Button>
+                        )}
                       </div>
                     ) : (
                       <Select
@@ -217,7 +268,7 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
           <Button
             onClick={handleSave}
             disabled={!isValid()}
-            className="inline-flex items-center justify-center text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full sm:w-auto">
+            className="w-full sm:w-auto">
             Start Chatting
           </Button>
         </DialogFooter>

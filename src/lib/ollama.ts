@@ -62,3 +62,16 @@ export async function checkOllamaRunning(): Promise<boolean> {
     return false;
   }
 }
+
+export async function pullOllamaModel(modelName: string): Promise<boolean> {
+  try {
+    const output = await invoke<string>("run_ollama_command", {
+      args: ["pull", modelName],
+    });
+    // Check if pull was successful (no error in output)
+    return !output.toLowerCase().includes("error");
+  } catch (error) {
+    console.error("Failed to pull Ollama model:", error);
+    return false;
+  }
+}
