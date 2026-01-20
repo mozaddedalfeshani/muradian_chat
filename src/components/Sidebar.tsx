@@ -123,24 +123,31 @@ const DraggableChatItem: React.FC<DraggableChatItemProps> = ({
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={`group w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted cursor-grab active:cursor-grabbing ${
+      className={`group w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted ${
         isActive ? "bg-muted font-medium" : ""
       } ${!isSidebarOpen && "justify-center px-2"} ${
         isDragging ? "opacity-50" : ""
       }`}>
+      {/* Drag handle - only this element triggers drag */}
+      <div
+        {...listeners}
+        {...attributes}
+        className="cursor-grab active:cursor-grabbing touch-none"
+        title="Drag to split view">
+        <MessageSquare className="h-4 w-4 shrink-0" />
+      </div>
+
+      {/* Clickable area for selection */}
       <button
         onClick={onSelect}
-        className={`flex-1 flex items-center gap-2 overflow-hidden text-left ${
-          !isSidebarOpen && "justify-center"
+        className={`flex-1 overflow-hidden text-left hover:underline ${
+          !isSidebarOpen && "hidden"
         }`}
         title={chat.title || "Untitled Chat"}>
-        <MessageSquare className="h-4 w-4 shrink-0" />
-        {isSidebarOpen && (
-          <span className="truncate">{chat.title || "Untitled Chat"}</span>
-        )}
+        <span className="truncate">{chat.title || "Untitled Chat"}</span>
       </button>
+
+      {/* Delete button */}
       {isSidebarOpen && (
         <button
           onClick={(e) => {

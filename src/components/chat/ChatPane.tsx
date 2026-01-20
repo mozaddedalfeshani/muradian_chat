@@ -54,6 +54,9 @@ const ChatPane: React.FC<ChatPaneProps> = ({
   const setModel = (newModel: string) => {
     if (chatId) {
       updateChatConfig(chatId, { model: newModel });
+    } else {
+      // Update global model when no chat is selected
+      useAppStore.getState().setModel(newModel);
     }
   };
 

@@ -17,6 +17,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   setModel,
 }) => {
   const [modelSearch, setModelSearch] = useState("");
+  const [open, setOpen] = useState(false);
 
   if (provider !== "openrouter") return null;
 
@@ -24,8 +25,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     m.toLowerCase().includes(modelSearch.toLowerCase()),
   );
 
+  const handleSelectModel = (m: string) => {
+    setModel(m);
+    setOpen(false); // Close popover after selection
+    setModelSearch(""); // Reset search
+  };
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -59,9 +66,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
                 className={`w-full justify-between font-normal text-xs ${
                   model === m ? "bg-accent text-accent-foreground" : ""
                 }`}
-                onClick={() => {
-                  setModel(m);
-                }}>
+                onClick={() => handleSelectModel(m)}>
                 <span className="truncate text-left">{m}</span>
                 {model === m && <Check className="h-3 w-3 ml-2 shrink-0" />}
               </Button>

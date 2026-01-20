@@ -16,8 +16,12 @@ import {
 } from "./ui/select";
 import { Label } from "./ui/label";
 import { useAppStore } from "../store/appStore";
-import { checkOllamaInstalled, getOllamaModels } from "../lib/ollama";
-import { Settings as SettingsIcon } from "lucide-react";
+import {
+  checkOllamaInstalled,
+  getOllamaModels,
+  checkOllamaRunning,
+} from "../lib/ollama";
+import { Settings as SettingsIcon, Loader2, AlertCircle } from "lucide-react";
 
 const SettingsDialog: React.FC = () => {
   const { provider, model, apiKeys, setProvider, setModel, setApiKey } =
@@ -28,6 +32,8 @@ const SettingsDialog: React.FC = () => {
   const [localApiKey, setLocalApiKey] = useState("");
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [ollamaError, setOllamaError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -46,17 +52,46 @@ const SettingsDialog: React.FC = () => {
       loadOllamaModels();
     } else {
       setLocalApiKey(apiKeys[localProvider] || "");
+      setOllamaError(null);
     }
   }, [localProvider, apiKeys]);
 
   const loadOllamaModels = async () => {
-    const installed = await checkOllamaInstalled();
-    if (installed) {
+    setIsLoadingModels(true);
+    setOllamaError(null);
+
+    try {
+      const isRunning = await checkOllamaRunning();
+      if (!isRunning) {
+        setOllamaError("Ollama is not running. Please start Ollama first.");
+        setOllamaModels([]);
+        setIsLoadingModels(false);
+        return;
+      }
+
+      const installed = await checkOllamaInstalled();
+      if (!installed) {
+        setOllamaError("Ollama is not installed.");
+        setOllamaModels([]);
+        setIsLoadingModels(false);
+        return;
+      }
+
       const models = await getOllamaModels();
       setOllamaModels(models);
-      if (models.length > 0 && !models.includes(localModel)) {
+
+      if (models.length === 0) {
+        setOllamaError(
+          "No models found. Run 'ollama pull <model>' to download a model.",
+        );
+      } else if (!models.includes(localModel)) {
         setLocalModel(models[0]);
       }
+    } catch (error) {
+      setOllamaError("Failed to load models. Check if Ollama is running.");
+      setOllamaModels([]);
+    } finally {
+      setIsLoadingModels(false);
     }
   };
 
@@ -87,7 +122,7 @@ const SettingsDialog: React.FC = () => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <div className="flex items-center justify-center p-2 rounded-md hover:bg-slate-100 text-slate-500 w-full">
+        <div className="flex items-center justify-center p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 w-full">
           <SettingsIcon className="h-5 w-5" />
           <span className="sr-only">Settings</span>
         </div>
@@ -115,19 +150,45 @@ const SettingsDialog: React.FC = () => {
 
           {localProvider === "ollama" && (
             <div className="grid gap-2">
-              <Label>Model</Label>
-              <Select value={localModel} onValueChange={setLocalModel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select model" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ollamaModels.map((m) => (
-                    <SelectItem key={m} value={m}>
-                      {m}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <Label>Model</Label>
+                {isLoadingModels && (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                )}
+              </div>
+
+              {ollamaError ? (
+                <div className="flex items-center gap-2 p-3 rounded-md bg-destructive/10 text-destructive text-sm">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{ollamaError}</span>
+                </div>
+              ) : ollamaModels.length > 0 ? (
+                <Select value={localModel} onValueChange={setLocalModel}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ollamaModels.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="text-sm text-muted-foreground p-2">
+                  {isLoadingModels
+                    ? "Loading models..."
+                    : "No models available"}
+                </div>
+              )}
+
+              <button
+                onClick={loadOllamaModels}
+                disabled={isLoadingModels}
+                className="text-xs text-primary hover:underline text-left disabled:opacity-50">
+                {isLoadingModels ? "Refreshing..." : "Refresh models"}
+              </button>
             </div>
           )}
 

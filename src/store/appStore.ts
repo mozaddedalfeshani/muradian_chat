@@ -184,6 +184,11 @@ export const useAppStore = create<AppState>()(
 
       selectChat: (chatId) =>
         set((state) => {
+          // Verify the chat exists
+          if (!state.chats.find((c) => c.id === chatId)) {
+            return {};
+          }
+
           // If in split view and clicking one of the open chats
           if (state.layout === "split") {
             if (chatId === state.primaryChatId) {
@@ -212,7 +217,20 @@ export const useAppStore = create<AppState>()(
             // Check if this chat was part of a stored split state
             if (state.lastSplitState) {
               const { primaryChatId, secondaryChatId } = state.lastSplitState;
-              if (chatId === primaryChatId || chatId === secondaryChatId) {
+
+              // Verify BOTH chats in the split state still exist
+              const primaryExists = state.chats.find(
+                (c) => c.id === primaryChatId,
+              );
+              const secondaryExists = state.chats.find(
+                (c) => c.id === secondaryChatId,
+              );
+
+              if (
+                primaryExists &&
+                secondaryExists &&
+                (chatId === primaryChatId || chatId === secondaryChatId)
+              ) {
                 // RESTORE SPLIT VIEW
                 return {
                   layout: "split",
@@ -221,6 +239,23 @@ export const useAppStore = create<AppState>()(
                   activePane:
                     chatId === primaryChatId ? "primary" : "secondary",
                   currentChatId: chatId,
+                };
+              } else if (
+                (!primaryExists || !secondaryExists) &&
+                (chatId === primaryChatId || chatId === secondaryChatId)
+              ) {
+                // If one of them is missing, clear the invalid state and proceed to standard switch
+                // But wait, we can't return logic here easily to modify state.lastSplitState AND proper return.
+                // We just fall through to standard switch, effectively ignoring the broken split state.
+                // Ideally we should clear it, but we can't side-effect easily in this pattern without complex object text.
+                // Implicitly, the next state update sets fields. 'lastSplitState' remains stale?
+                // No, let's clear it in the return object.
+                // We will return standard switch WITH lastSplitState: null.
+                return {
+                  primaryChatId: chatId,
+                  currentChatId: chatId,
+                  activePane: "primary",
+                  lastSplitState: null,
                 };
               }
             }
