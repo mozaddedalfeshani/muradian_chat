@@ -8,7 +8,6 @@ import {
   chatWithOpenRouter,
   fetchOpenRouterModels,
 } from "../../lib/openRouterChat";
-import { useDraggable } from "@dnd-kit/core";
 
 interface ChatPaneProps {
   chatId: string | null;
@@ -27,7 +26,6 @@ const ChatPane: React.FC<ChatPaneProps> = ({
     chats,
     addChat,
     addMessage,
-    updateChatTitle,
     updateChatConfig,
     provider: globalProvider,
     model: globalModel,
@@ -124,7 +122,6 @@ const ChatPane: React.FC<ChatPaneProps> = ({
         // Auto-title generation logic (simplified)
         if (updatedMessages.length < 5) {
           // ... existing title logic
-          // For brevity, we can integrate the same title logic here or refactor it out
         }
       } else if (provider === "openrouter") {
         const apiKey = useAppStore.getState().apiKeys[provider];
@@ -165,7 +162,7 @@ const ChatPane: React.FC<ChatPaneProps> = ({
         className={`flex-1 flex flex-col h-full relative border-l ${isActive ? "ring-2 ring-primary/10" : ""}`}
         onClick={onFocus}>
         <ChatHeader
-          title="Muradian AI"
+          title="MOSP Chat"
           provider={provider}
           model={model}
           onMaximize={layout === "split" ? () => maximizePane(pane) : undefined}

@@ -83,7 +83,7 @@ const ChatApp: React.FC = () => {
               <div className="flex-1 relative h-full overflow-hidden">
                 {showDropZones && <DropZone id="sidebar" position="sidebar" />}
                 <ResizablePanelGroup
-                  direction="horizontal"
+                  {...({ direction: "horizontal" } as any)}
                   className="h-full w-full">
                   <ResizablePanel defaultSize={50} minSize={30}>
                     <ChatPane

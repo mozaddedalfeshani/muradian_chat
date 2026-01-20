@@ -23,6 +23,7 @@ import {
 } from "./ui/select";
 import { Label } from "./ui/label";
 import { Progress } from "./ui/progress";
+import { Button } from "./ui/button";
 
 interface ProviderDialogProps {
   open: boolean;
@@ -152,11 +153,11 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
                       </p>
                     </div>
                   ) : (
-                    <button
+                    <Button
                       onClick={handleInstallOllama}
-                      className="w-full inline-flex justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+                      className="w-full inline-flex justify-center text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
                       Install Ollama
-                    </button>
+                    </Button>
                   )}
                 </div>
               ) : (
@@ -213,12 +214,12 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
         </div>
 
         <DialogFooter>
-          <button
+          <Button
             onClick={handleSave}
             disabled={!isValid()}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full sm:w-auto">
+            className="inline-flex items-center justify-center text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full sm:w-auto">
             Start Chatting
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

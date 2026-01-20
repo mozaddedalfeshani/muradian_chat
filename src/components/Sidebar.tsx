@@ -12,6 +12,7 @@ import SettingsDialog from "./SettingsDialog";
 import { useAppStore, type Chat } from "../store/appStore";
 import { useTheme } from "next-themes";
 import { useDraggable } from "@dnd-kit/core";
+import { Button } from "./ui/button";
 
 const Sidebar: React.FC = () => {
   const {
@@ -40,15 +41,15 @@ const Sidebar: React.FC = () => {
         isSidebarOpen ? "w-64" : "w-[70px]"
       } border-r bg-muted/20 flex flex-col h-full transition-all duration-300 ease-in-out`}>
       <div className="p-4">
-        <button
+        <Button
           onClick={handleNewChat}
-          className={`w-full flex items-center gap-2 justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 ${
+          className={`w-full flex items-center gap-2 justify-center  bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 ${
             !isSidebarOpen && "px-2"
           }`}
           title="New Chat">
           <Plus className="h-4 w-4" />
           {isSidebarOpen && <span>New Chat</span>}
-        </button>
+        </Button>
       </div>
 
       <div className="flex-1 overflow-auto p-2 space-y-1">

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Ollama Chat",
+  "productName": "MOSP Chat",
   "version": "0.1.0",
-  "identifier": "com.murad.ollama-chat",
+  "identifier": "com.murad.mosp-chat",
   "build": {
     "beforeDevCommand": "bun run dev",
     "beforeBuildCommand": "bun run build",
@@ -13,7 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
-        "title": "Ollama Chat",
+        "title": "MOSP Chat",
         "width": 1000,
         "height": 700,
         "minWidth": 600,

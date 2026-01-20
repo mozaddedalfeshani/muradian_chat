@@ -13,7 +13,7 @@ export async function chatWithOpenRouter(
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
           "HTTP-Referer": window.location.origin, // Optional, for including your app on openrouter.ai rankings.
-          "X-Title": "Muradian AI", // Optional. Shows in rankings on openrouter.ai.
+          "X-Title": "MOSP Chat", // Optional. Shows in rankings on openrouter.ai.
         },
         body: JSON.stringify({
           model,

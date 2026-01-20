@@ -8,7 +8,7 @@ interface ChatHeaderProps {
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
-  title = "Muradian AI",
+  title = "MOSP Chat",
   provider,
   model,
   onMaximize,
