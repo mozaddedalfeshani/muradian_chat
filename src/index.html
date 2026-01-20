@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ollama Chat</title>
+  <script type="module" src="/main.js" defer></script>
+</head>
+
+<body>
+  <main class="chat-container">
+    <div class="chat-header">
+      <h1>💬 Ollama Chat</h1>
+      <div class="model-info">Model: deepseek-r1:1.5b</div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="message assistant">
+        <div class="message-content">
+          Hi! I'm DeepSeek-R1. How can I help you today?
+        </div>
+      </div>
+    </div>
+
+    <form class="chat-input-form" id="chat-form">
+      <input id="message-input" placeholder="Type your message..." autocomplete="off" />
+      <button type="submit" id="send-btn">Send</button>
+    </form>
+  </main>
+</body>
+</html>
