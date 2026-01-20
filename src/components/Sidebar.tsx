@@ -123,7 +123,7 @@ const DraggableChatItem: React.FC<DraggableChatItemProps> = ({
   return (
     <div
       ref={setNodeRef}
-      className={`group w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted ${
+      className={`group w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-muted animate__animated animate__fadeIn animate__faster ${
         isActive ? "bg-muted font-medium" : ""
       } ${!isSidebarOpen && "justify-center px-2"} ${
         isDragging ? "opacity-50" : ""

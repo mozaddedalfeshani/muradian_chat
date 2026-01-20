@@ -86,7 +86,7 @@ const DialogContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          "pointer-events-auto relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg",
+          "pointer-events-auto relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg duration-200 sm:rounded-lg animate__animated animate__zoomIn animate__faster",
           className,
         )}
         {...props}>
