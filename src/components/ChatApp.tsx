@@ -27,10 +27,11 @@ const ChatApp: React.FC = () => {
 
     try {
       if (provider === "ollama") {
-        // Use Ollama API with streaming
+        // Send last 20 messages as context
+        const contextMessages = updatedMessages.slice(-20);
         let accumulatedContent = "";
 
-        await chatWithOllama(model, updatedMessages, (chunk) => {
+        await chatWithOllama(model, contextMessages, (chunk) => {
           accumulatedContent += chunk;
           setStreamingContent(accumulatedContent);
         });
@@ -74,13 +75,13 @@ const ChatApp: React.FC = () => {
 
           <div className="flex-1 flex flex-col h-full relative">
             {/* Header */}
-            <header className="border-b bg-gradient-to-r from-slate-900 to-slate-700 p-4 text-primary-foreground flex items-center gap-3 shadow-sm z-10">
+            <header className="border-b bg-background p-4 flex items-center gap-3">
               <span className="text-2xl">🤖</span>
               <div>
                 <h1 className="text-xl font-semibold leading-none">
                   Muradian AI
                 </h1>
-                <p className="text-xs text-primary-foreground/90 mt-0.5 opacity-80">
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Provider: {provider} | Model: {model}
                 </p>
               </div>
