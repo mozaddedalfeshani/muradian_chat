@@ -113,8 +113,15 @@ const ChatPane: React.FC<ChatPaneProps> = ({
       if (provider === "ollama") {
         setThinkingStatus("Thinking...");
 
-        // Send last 20 messages as context
-        const contextMessages = updatedMessages.slice(-20);
+        // System message for proper formatting
+        const systemMessage = {
+          role: "system",
+          content:
+            "When writing math equations, use $$ ... $$ for display math and $ ... $ for inline math. For example: $$E = mc^2$$ or $x^2$. Do not use [ ] brackets for math.",
+        };
+
+        // Send last 20 messages as context with system message
+        const contextMessages = [systemMessage, ...updatedMessages.slice(-20)];
         let accumulatedContent = "";
         let accumulatedThinking = "";
 
@@ -138,6 +145,7 @@ const ChatPane: React.FC<ChatPaneProps> = ({
         addMessage(activeChatId!, {
           role: "assistant",
           content: accumulatedContent,
+          thinking: accumulatedThinking || undefined,
         });
         setStreamingContent("");
         setStreamingThinking("");

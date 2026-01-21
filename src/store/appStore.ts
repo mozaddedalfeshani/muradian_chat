@@ -58,6 +58,7 @@ interface Chat {
 interface Message {
   role: "user" | "assistant";
   content: string;
+  thinking?: string;
 }
 
 export const useAppStore = create<AppState>()(

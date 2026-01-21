@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import {
   Copy,
   Edit2,
@@ -52,6 +55,35 @@ const MessageList: React.FC<MessageListProps> = ({
     y: 0,
     text: "",
   });
+
+  // Preprocess content to convert various LaTeX delimiters to $$ format
+  const preprocessMath = (content: string) => {
+    if (!content) return content;
+
+    // Convert \[ ... \] to $$ ... $$ (display math)
+    let processed = content.replace(
+      /\\\[([\s\S]*?)\\\]/g,
+      "$$$$" + "$1" + "$$$$",
+    );
+
+    // Convert [ ... ] standalone math blocks (when on own line or with leading text)
+    // Match patterns like ": [ \frac{...} ]"
+    processed = processed.replace(
+      /\[\s*(\\[a-zA-Z]+[\s\S]*?)\s*\]/g,
+      (match, math) => {
+        // Check if it looks like LaTeX (contains backslash commands)
+        if (math.includes("\\")) {
+          return "$$" + math.trim() + "$$";
+        }
+        return match;
+      },
+    );
+
+    // Convert \( ... \) to $ ... $ (inline math)
+    processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, "$$$1$$");
+
+    return processed;
+  };
 
   const handleCopy = async (content: string, index: number) => {
     await navigator.clipboard.writeText(content);
@@ -179,7 +211,7 @@ const MessageList: React.FC<MessageListProps> = ({
         <div
           key={i}
           className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate__animated animate__fadeIn animate__faster group`}>
-          <div className="relative max-w-[75%]">
+          <div className="relative max-w-[95%]">
             {editingIndex === i ? (
               <div className="flex flex-col gap-2">
                 <textarea
@@ -212,15 +244,42 @@ const MessageList: React.FC<MessageListProps> = ({
                   className={`rounded-lg px-4 py-2 ${
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground"
-                      : `bg-muted prose dark:prose-invert prose-sm break-words ${
+                      : `w-full bg-muted prose dark:prose-invert prose-sm break-words ${
                           // Add rainbow glow to the last AI message
                           i === messages.length - 1 && msg.role === "assistant"
                             ? "rainbow-glow-border"
                             : ""
                         }`
                   }`}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {msg.content}
+                  {/* Thinking section for saved messages */}
+                  {msg.thinking && msg.role === "assistant" && (
+                    <div className="mb-3 border-b border-border/50 pb-3 not-prose">
+                      <button
+                        onClick={() => setShowThinking(!showThinking)}
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">
+                        <Brain className="h-4 w-4 text-primary" />
+                        <span className="font-medium">View reasoning</span>
+                        {showThinking ? (
+                          <ChevronUp className="h-4 w-4 ml-auto" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 ml-auto" />
+                        )}
+                      </button>
+                      {showThinking && (
+                        <div className="mt-2 text-sm text-muted-foreground italic pl-6 border-l-2 border-primary/30 max-h-[200px] overflow-y-auto">
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm, remarkMath]}
+                            rehypePlugins={[rehypeKatex]}>
+                            {msg.thinking}
+                          </ReactMarkdown>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkMath]}
+                    rehypePlugins={[rehypeKatex]}>
+                    {preprocessMath(msg.content)}
                   </ReactMarkdown>
                 </div>
                 <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -254,47 +313,53 @@ const MessageList: React.FC<MessageListProps> = ({
       ))}
       {loading && (streamingContent || streamingThinking) && (
         <div className="flex justify-start animate__animated animate__fadeIn animate__faster">
-          <div
-            data-ai-message="true"
-            className="bg-muted rounded-lg px-4 py-2 max-w-[75%] prose dark:prose-invert prose-sm break-words rainbow-glow-border">
-            {/* Thinking section */}
-            {streamingThinking && (
-              <div className="mb-3 border-b border-border/50 pb-3">
-                <button
-                  onClick={() => setShowThinking(!showThinking)}
-                  className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">
-                  <Brain className="h-4 w-4 text-primary animate-pulse" />
-                  <span className="font-medium">AI is reasoning...</span>
-                  {showThinking ? (
-                    <ChevronUp className="h-4 w-4 ml-auto" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4 ml-auto" />
+          <div className="relative max-w-[95%]">
+            <div
+              data-ai-message="true"
+              className="w-full bg-muted rounded-lg px-4 py-2 prose dark:prose-invert prose-sm break-words rainbow-glow-border">
+              {/* Thinking section */}
+              {streamingThinking && (
+                <div className="mb-3 border-b border-border/50 pb-3">
+                  <button
+                    onClick={() => setShowThinking(!showThinking)}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">
+                    <Brain className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="font-medium">AI is reasoning...</span>
+                    {showThinking ? (
+                      <ChevronUp className="h-4 w-4 ml-auto" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 ml-auto" />
+                    )}
+                  </button>
+                  {showThinking && (
+                    <div className="mt-2 text-sm text-muted-foreground italic pl-6 border-l-2 border-primary/30 max-h-[200px] overflow-y-auto">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm, remarkMath]}
+                        rehypePlugins={[rehypeKatex]}>
+                        {streamingThinking}
+                      </ReactMarkdown>
+                    </div>
                   )}
-                </button>
-                {showThinking && (
-                  <div className="mt-2 text-sm text-muted-foreground italic pl-6 border-l-2 border-primary/30 max-h-[200px] overflow-y-auto">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {streamingThinking}
-                    </ReactMarkdown>
-                  </div>
-                )}
-              </div>
-            )}
-            {/* Main response content */}
-            {streamingContent && (
-              <>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {streamingContent}
-                </ReactMarkdown>
-                <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
-              </>
-            )}
+                </div>
+              )}
+              {/* Main response content */}
+              {streamingContent && (
+                <>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkMath]}
+                    rehypePlugins={[rehypeKatex]}>
+                    {preprocessMath(streamingContent)}
+                  </ReactMarkdown>
+                  <span className="inline-block w-2 h-4 ml-1 bg-current animate-pulse" />
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
       {loading && !streamingContent && (
         <div className="flex justify-start animate__animated animate__fadeIn">
-          <div className="bg-muted rounded-lg px-4 py-3 max-w-[75%] space-y-2 rainbow-glow-border">
+          <div className="bg-muted rounded-lg px-4 py-3 max-w-[95%] space-y-2 rainbow-glow-border">
             {thinkingStatus && (
               <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
                 <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse" />
