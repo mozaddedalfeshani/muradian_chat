@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import {
-  Loader2,
-  Copy,
-  Edit2,
-  Check,
-  ArrowUp,
-  MessageSquareQuote,
-} from "lucide-react";
+import { Copy, Edit2, Check, ArrowUp, MessageSquareQuote } from "lucide-react";
 import { type Message } from "../../store/appStore";
 import { Button } from "../ui/button";
 
@@ -205,7 +198,12 @@ const MessageList: React.FC<MessageListProps> = ({
                   className={`rounded-lg px-4 py-2 ${
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted prose dark:prose-invert prose-sm break-words"
+                      : `bg-muted prose dark:prose-invert prose-sm break-words ${
+                          // Add rainbow glow to the last AI message
+                          i === messages.length - 1 && msg.role === "assistant"
+                            ? "rainbow-glow-border"
+                            : ""
+                        }`
                   }`}>
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {msg.content}
@@ -244,7 +242,7 @@ const MessageList: React.FC<MessageListProps> = ({
         <div className="flex justify-start animate__animated animate__fadeIn animate__faster">
           <div
             data-ai-message="true"
-            className="bg-muted rounded-lg px-4 py-2 max-w-[75%] prose dark:prose-invert prose-sm break-words">
+            className="bg-muted rounded-lg px-4 py-2 max-w-[75%] prose dark:prose-invert prose-sm break-words rainbow-glow-border">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {streamingContent}
             </ReactMarkdown>
@@ -254,8 +252,10 @@ const MessageList: React.FC<MessageListProps> = ({
       )}
       {loading && !streamingContent && (
         <div className="flex justify-start animate__animated animate__fadeIn">
-          <div className="bg-muted rounded-lg px-4 py-2 flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" /> Thinking...
+          <div className="bg-muted rounded-lg px-4 py-3 max-w-[75%] space-y-2 rainbow-glow-border">
+            <div className="h-4 bg-foreground/10 rounded animate-pulse w-48" />
+            <div className="h-4 bg-foreground/10 rounded animate-pulse w-36" />
+            <div className="h-4 bg-foreground/10 rounded animate-pulse w-52" />
           </div>
         </div>
       )}

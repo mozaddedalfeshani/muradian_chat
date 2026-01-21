@@ -68,3 +68,53 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Rainbow glow animation for AI thinking state */
+@property --glow-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes rainbow-glow-spin {
+  to {
+    --glow-angle: 360deg;
+  }
+}
+
+.rainbow-glow-border {
+  position: relative;
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 1rem;
+  overflow: visible;
+}
+
+.rainbow-glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 1.125rem;
+  background: conic-gradient(
+    from var(--glow-angle),
+    #ff0080,
+    #ff8c00,
+    #ffd700,
+    #00ff00,
+    #00bfff,
+    #8a2be2,
+    #ff0080
+  );
+  z-index: -1;
+  animation: rainbow-glow-spin 3s linear infinite;
+  filter: blur(4px);
+  opacity: 0.8;
+}
+
+.rainbow-glow-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: hsl(var(--background));
+  border-radius: 1rem;
+  z-index: -1;
+}
