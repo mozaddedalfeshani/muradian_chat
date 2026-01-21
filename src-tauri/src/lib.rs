@@ -54,10 +54,62 @@ fn run_ollama_command(args: Vec<String>) -> String {
     }
 }
 
+use tauri::Emitter;
+
 #[tauri::command]
 fn install_ollama() -> bool {
     let _ = opener::open("https://ollama.com/download");
     true
+}
+
+#[tauri::command]
+async fn setup_muradian_auto(app: tauri::AppHandle) -> Result<String, String> {
+    let os = std::env::consts::OS;
+    let _ = app.emit("setup-progress", "Starting setup...");
+
+    // Helper to run command and emit progress
+    let run_cmd = |cmd: &str, args: &[&str], stage: &str| -> Result<(), String> {
+        let _ = app.emit("setup-progress", stage);
+        println!("Running: {} {:?}", cmd, args);
+        
+        let output = std::process::Command::new(cmd)
+            .args(args)
+            .output()
+            .map_err(|e| format!("Failed to run {}: {}", cmd, e))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Command failed: {}", stderr));
+        }
+        Ok(())
+    };
+
+    match os {
+        "windows" => {
+             // Windows setup
+             run_cmd("cmd", &["/C", "winget install -e --id Ollama.Ollama"], "Installing Ollama (Windows)...")?;
+             run_cmd("cmd", &["/C", "ollama pull deepseek-r1:1.5b"], "Pulling deepseek-r1:1.5b...")?; 
+        }
+        "macos" | "linux" => {
+             // check if ollama exists first to skip install if possible? 
+             // Logic says "install via curl script". 
+             // We can try to check availability first?
+             // But user script was unconditional. Let's rely on script idempotency or check.
+             
+             // Check if ollama is installed
+             let installed = std::process::Command::new("ollama").arg("--version").output().is_ok();
+             
+             if !installed {
+                 run_cmd("sh", &["-c", "curl -fsSL https://ollama.com/install.sh | sh"], "Installing Ollama...")?;
+             }
+             
+             run_cmd("ollama", &["pull", "deepseek-r1:1.5b"], "Pulling Model: deepseek-r1:1.5b (this may take a while)...")?;
+        }
+        _ => return Err(format!("Unsupported OS: {}", os)),
+    }
+
+    let _ = app.emit("setup-progress", "Setup Complete!");
+    Ok("Success".to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -68,7 +120,8 @@ pub fn run() {
             greet, 
             check_ollama_installed, 
             run_ollama_command,
-            install_ollama
+            install_ollama,
+            setup_muradian_auto
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

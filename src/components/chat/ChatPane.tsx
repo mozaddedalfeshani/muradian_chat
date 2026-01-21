@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useAppStore, type Message } from "../../store/appStore";
+import { invoke } from "@tauri-apps/api/core";
 import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
@@ -57,6 +58,7 @@ const ChatPane: React.FC<ChatPaneProps> = ({
   const [streamingThinking, setStreamingThinking] = useState("");
   const [thinkingStatus, setThinkingStatus] = useState("");
   const [openRouterModels, setOpenRouterModels] = useState<string[]>([]);
+  const [setupProgress, setSetupProgress] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -85,6 +87,42 @@ const ChatPane: React.FC<ChatPaneProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Check and setup Muradian Auto dependencies
+  useEffect(() => {
+    if (provider === "muradian") {
+      const checkAndSetup = async () => {
+        try {
+          const models = await getOllamaModels();
+          const hasDeepSeek = models.includes("deepseek-r1:1.5b");
+
+          if (!hasDeepSeek) {
+            setSetupProgress(
+              "We are setting up your models, it depends on your internet speed",
+            );
+            await invoke("setup_muradian_auto");
+            setSetupProgress(null);
+          }
+        } catch (e) {
+          console.error("Setup check failed", e);
+          // Maybe setup failed or ollama not running at all.
+          // If completely not running, setup_muradian_auto might fix it (install).
+          // But we need to invoke it.
+          try {
+            setSetupProgress(
+              "We are setting up your models, it depends on your internet speed",
+            );
+            await invoke("setup_muradian_auto");
+            setSetupProgress(null);
+          } catch (err) {
+            setSetupProgress("Setup Failed. Please install Ollama manually.");
+            setTimeout(() => setSetupProgress(null), 5000);
+          }
+        }
+      };
+      checkAndSetup();
+    }
+  }, [provider]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingContent]);
@@ -94,9 +132,8 @@ const ChatPane: React.FC<ChatPaneProps> = ({
   ): Promise<"CODING" | "GENERAL"> => {
     try {
       setThinkingStatus("Muradian Auto: Detecting intent...");
-      const lastMsg = msgs[msgs.length - 1];
       const context = msgs
-        .slice(-3)
+        .slice(-10)
         .map((m) => `${m.role}: ${m.content}`)
         .join("\n");
 
@@ -220,7 +257,6 @@ Respond with ONLY one word: "CODING" or "GENERAL". Do not explain.`,
               }
             } else {
               activeProvider = "openrouter";
-              const keys = useAppStore.getState().apiKeys;
               // If user has set a key for a specific provider, we might want to respect that?
               // But for "Muradian Auto" we force specific free models.
               activeModel = "google/gemini-2.0-flash-exp:free";
@@ -258,12 +294,12 @@ Respond with ONLY one word: "CODING" or "GENERAL". Do not explain.`,
             setStreamingContent(accumulatedContent);
             setThinkingStatus("");
           },
-          // onThinkingChunk - for thinking content
           (thinkChunk) => {
             accumulatedThinking += thinkChunk;
             setStreamingThinking(accumulatedThinking);
             setThinkingStatus("Reasoning...");
           },
+          signal,
         );
 
         addMessage(activeChatId!, {
@@ -321,6 +357,7 @@ Respond with ONLY one word: "CODING" or "GENERAL". Do not explain.`,
                   setStreamingContent(accumulatedContent);
                   setThinkingStatus("");
                 },
+                signal,
               );
               success = true;
               // Persist which model succeeded
@@ -345,6 +382,7 @@ Respond with ONLY one word: "CODING" or "GENERAL". Do not explain.`,
               setStreamingContent(accumulatedContent);
               setThinkingStatus("");
             },
+            signal,
           );
         }
 
@@ -540,7 +578,15 @@ Respond with ONLY one word: "CODING" or "GENERAL". Do not explain.`,
         onMaximize={layout === "split" ? () => maximizePane(pane) : undefined}
       />
 
-      <div className="flex-1 overflow-auto p-4 space-y-4">
+      <div className="flex-1 overflow-auto p-4 space-y-4 relative">
+        {setupProgress && (
+          <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b p-2 mb-2 flex items-center justify-center gap-2 animate-in slide-in-from-top-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+            <span className="text-sm font-medium text-primary">
+              {setupProgress}
+            </span>
+          </div>
+        )}
         <MessageList
           messages={messages}
           loading={loading}
