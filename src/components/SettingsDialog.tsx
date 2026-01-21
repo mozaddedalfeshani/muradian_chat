@@ -53,7 +53,7 @@ const SettingsDialog: React.FC = () => {
     if (open) {
       setLocalProvider(provider);
       setLocalModel(model);
-      setLocalApiKey(apiKeys[provider] || "");
+      setLocalApiKey(useAppStore.getState().getApiKey(provider) || "");
 
       if (provider === "ollama" || localProvider === "ollama") {
         loadOllamaModels();
@@ -65,7 +65,7 @@ const SettingsDialog: React.FC = () => {
     if (localProvider === "ollama") {
       loadOllamaModels();
     } else {
-      setLocalApiKey(apiKeys[localProvider] || "");
+      setLocalApiKey(useAppStore.getState().getApiKey(localProvider) || "");
       setOllamaError(null);
     }
   }, [localProvider, apiKeys]);
@@ -147,6 +147,10 @@ const SettingsDialog: React.FC = () => {
       if (localProvider === "openrouter")
         setModel("google/gemini-2.0-flash-exp:free");
       if (localProvider === "openai") setModel("gpt-4o");
+      if (localProvider === "muradian") {
+        setModel("muradian-auto");
+        setApiKey("openrouter", localApiKey);
+      }
     }
     setOpen(false);
   };
@@ -178,6 +182,12 @@ const SettingsDialog: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ollama">Ollama</SelectItem>
+                  <SelectItem value="muradian">
+                    Muradian Auto{" "}
+                    <span className="ml-2 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold text-foreground">
+                      Fine Tuning
+                    </span>
+                  </SelectItem>
                   <SelectItem value="openrouter">OpenRouter</SelectItem>
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="anthropic">Anthropic</SelectItem>
@@ -256,7 +266,7 @@ const SettingsDialog: React.FC = () => {
               </div>
             )}
 
-            {localProvider !== "ollama" && (
+            {localProvider !== "ollama" && localProvider !== "muradian" && (
               <div className="grid gap-2">
                 <Label htmlFor="apikey-settings">API Key</Label>
                 <input

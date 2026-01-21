@@ -125,6 +125,17 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
       if (selectedProvider === "openai") setModel("gpt-4o");
       if (selectedProvider === "anthropic")
         setModel("claude-3-5-sonnet-latest");
+      // For Muradian, we also need OpenRouter key likely, or we reuse it?
+      // Actually standardizing: if provider is muradian, we save the key for muradian?
+      // Or we should save it for openrouter since it uses openrouter?
+      // The store calls setApiKey(provider, key). So it will save to apiKeys['muradian'].
+      // But ChatPane might look for apiKeys['openrouter'].
+      // To be safe, if muradian, we might want to save to openrouter too or just use muradian key in logic.
+      if (selectedProvider === "muradian") {
+        setModel("muradian-auto");
+        // Also save to openrouter just in case logic uses it
+        setApiKey("openrouter", apiKey);
+      }
     }
 
     completeSetup();
@@ -132,6 +143,7 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
 
   const isValid = () => {
     if (selectedProvider === "ollama") return ollamaInstalled && selectedModel;
+    if (selectedProvider === "muradian") return true;
     return apiKey.length > 0;
   };
 
@@ -157,6 +169,12 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ollama">Ollama (Local)</SelectItem>
+                <SelectItem value="muradian">
+                  Muradian Auto{" "}
+                  <span className="ml-2 inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold text-foreground">
+                    Fine Tuning
+                  </span>
+                </SelectItem>
                 <SelectItem value="openrouter">OpenRouter</SelectItem>
                 <SelectItem value="openai">OpenAI</SelectItem>
                 <SelectItem value="anthropic">Anthropic</SelectItem>
@@ -249,7 +267,7 @@ const ProviderDialog: React.FC<ProviderDialogProps> = ({ open }) => {
             </div>
           )}
 
-          {selectedProvider !== "ollama" && (
+          {selectedProvider !== "ollama" && selectedProvider !== "muradian" && (
             <div className="grid gap-2">
               <Label htmlFor="apikey">API Key</Label>
               <input

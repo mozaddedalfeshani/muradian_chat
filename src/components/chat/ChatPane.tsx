@@ -4,10 +4,12 @@ import ChatHeader from "./ChatHeader";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import { chatWithOllama } from "../../lib/ollamaChat";
+import { checkOllamaRunning, getOllamaModels } from "../../lib/ollama";
 import {
   chatWithOpenRouter,
   fetchOpenRouterModels,
 } from "../../lib/openRouterChat";
+import { OPENROUTER_API_KEY } from "../../secret/api";
 
 interface ChatPaneProps {
   chatId: string | null;
@@ -15,6 +17,15 @@ interface ChatPaneProps {
   isActive: boolean;
   onFocus: () => void;
 }
+
+const FREE_MODELS = [
+  "google/gemini-2.0-flash-exp:free",
+  "google/gemini-2.0-pro-exp-02-05:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "deepseek/deepseek-r1:free",
+  "qwen/qwen-2.5-coder-32b-instruct:free",
+  "mistralai/mistral-small-24b-instruct-2501:free",
+];
 
 const ChatPane: React.FC<ChatPaneProps> = ({
   chatId,
@@ -110,12 +121,54 @@ const ChatPane: React.FC<ChatPaneProps> = ({
     ];
 
     try {
-      if (provider === "ollama") {
+      let activeProvider = provider;
+      let activeModel = model;
+
+      // Muradian Auto Logic
+      if (provider === "muradian") {
+        try {
+          // Check for local model availability
+          const isLocalAvailable = await checkOllamaRunning();
+          // Switch to cloud after 5 messages
+          // "always run in auto mode like while user start question it will use localmodel ... switch after some message"
+          const shouldTryLocal =
+            isLocalAvailable && updatedMessages.length <= 5;
+
+          if (shouldTryLocal) {
+            activeProvider = "ollama";
+            // Attempt to get a valid local model
+            const localModels = await getOllamaModels();
+            if (localModels.length > 0) {
+              // Prefer deepseek-r1:1.5b as default if available
+              activeModel = localModels.includes("deepseek-r1:1.5b")
+                ? "deepseek-r1:1.5b"
+                : localModels[0];
+            } else {
+              activeModel = "deepseek-r1:1.5b";
+            }
+          } else {
+            activeProvider = "openrouter";
+            activeModel = "google/gemini-2.0-flash-exp:free";
+            // Ensure OpenRouter key is available
+            if (!useAppStore.getState().getApiKey("openrouter")) {
+              // If no key, maybe warn or fallback?
+              // Assuming user has set it or it will fail in chatWithOpenRouter
+            }
+          }
+        } catch (e) {
+          console.error("Muradian Auto logic error:", e);
+          // Fallback to openrouter
+          activeProvider = "openrouter";
+          activeModel = "google/gemini-2.0-flash-exp:free";
+        }
+      }
+
+      if (activeProvider === "ollama") {
         setThinkingStatus("Thinking...");
 
         // System message for proper formatting
         const systemMessage = {
-          role: "system",
+          role: "system" as const, // Fix TS issue with string vs literal
           content:
             "When writing math equations, use $$ ... $$ for display math and $ ... $ for inline math. For example: $$E = mc^2$$ or $x^2$. Do not use [ ] brackets for math.",
         };
@@ -126,7 +179,7 @@ const ChatPane: React.FC<ChatPaneProps> = ({
         let accumulatedThinking = "";
 
         await chatWithOllama(
-          model,
+          activeModel,
           contextMessages,
           // onChunk - for main content
           (chunk) => {
@@ -158,23 +211,76 @@ const ChatPane: React.FC<ChatPaneProps> = ({
         if (currentMessages.length === 4) {
           generateTitle(activeChatId!, currentMessages);
         }
-      } else if (provider === "openrouter") {
-        const apiKey = useAppStore.getState().apiKeys[provider];
-        if (!apiKey) throw new Error("API Key not found");
+      } else if (activeProvider === "openrouter") {
+        let apiKey = useAppStore.getState().getApiKey("openrouter");
+
+        // Direct fallback check
+        if (!apiKey) {
+          apiKey = OPENROUTER_API_KEY || "";
+        }
+
+        if (!apiKey || apiKey.includes("YOUR_KEY_HERE")) {
+          throw new Error(
+            "API Key not found or invalid. Please update 'src/secret/api.ts' with your OpenRouter API key.",
+          );
+        }
 
         setThinkingStatus("Connecting to AI...");
         const contextMessages = updatedMessages.slice(-20);
         let accumulatedContent = "";
 
-        await chatWithOpenRouter(model, apiKey, contextMessages, (chunk) => {
-          accumulatedContent += chunk;
-          setStreamingContent(accumulatedContent);
-          setThinkingStatus("");
-        });
+        if (provider === "muradian") {
+          const modelsToTry = Array.from(
+            new Set([activeModel, ...FREE_MODELS]),
+          );
+          let lastError;
+          let success = false;
+
+          for (const modelToTry of modelsToTry) {
+            try {
+              setThinkingStatus("Muradian Model Is processing");
+
+              accumulatedContent = ""; // Reset for new attempt
+              await chatWithOpenRouter(
+                modelToTry,
+                apiKey,
+                contextMessages,
+                (chunk) => {
+                  accumulatedContent += chunk;
+                  setStreamingContent(accumulatedContent);
+                  setThinkingStatus("");
+                },
+              );
+              success = true;
+              // Persist which model succeeded
+              activeModel = modelToTry;
+              break;
+            } catch (e) {
+              console.warn(`Muradian Auto: Model ${modelToTry} failed`, e);
+              lastError = e;
+              // Continue to next model
+            }
+          }
+
+          if (!success) throw lastError;
+        } else {
+          // Standard direct use
+          await chatWithOpenRouter(
+            activeModel,
+            apiKey,
+            contextMessages,
+            (chunk) => {
+              accumulatedContent += chunk;
+              setStreamingContent(accumulatedContent);
+              setThinkingStatus("");
+            },
+          );
+        }
 
         addMessage(activeChatId!, {
           role: "assistant",
           content: accumulatedContent,
+          model: activeModel, // Save model attribution
         });
         setStreamingContent("");
 
@@ -213,11 +319,17 @@ const ChatPane: React.FC<ChatPaneProps> = ({
             title += chunk;
           },
         );
-      } else if (provider === "openrouter") {
-        const apiKey = useAppStore.getState().apiKeys[provider];
+      } else if (provider === "openrouter" || provider === "muradian") {
+        let apiKey = useAppStore.getState().getApiKey("openrouter");
+        if (!apiKey) {
+          apiKey = OPENROUTER_API_KEY || "";
+        }
+        const targetModel =
+          provider === "muradian" ? "google/gemini-2.0-flash-exp:free" : model;
+
         if (apiKey) {
           await chatWithOpenRouter(
-            model,
+            targetModel,
             apiKey,
             [{ role: "user", content: titlePrompt }],
             (chunk) => {

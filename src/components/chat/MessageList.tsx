@@ -281,6 +281,12 @@ const MessageList: React.FC<MessageListProps> = ({
                     rehypePlugins={[rehypeKatex]}>
                     {preprocessMath(msg.content)}
                   </ReactMarkdown>
+                  {msg.model && (
+                    <div className="mt-2 text-[10px] text-muted-foreground/60 border-t border-border/10 pt-1 font-mono">
+                      Answered by{" "}
+                      {msg.model.split("/").pop()?.split(":")[0].split("-")[0]}
+                    </div>
+                  )}
                 </div>
                 <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                   <Button

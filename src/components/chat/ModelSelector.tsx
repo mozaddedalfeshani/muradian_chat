@@ -19,7 +19,22 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const [modelSearch, setModelSearch] = useState("");
   const [open, setOpen] = useState(false);
 
-  if (provider !== "openrouter") return null;
+  if (provider !== "openrouter" && provider !== "muradian") return null;
+
+  if (provider === "muradian") {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-8 gap-1 text-xs font-normal text-muted-foreground hover:text-foreground">
+        Muradian Auto
+        <span className="ml-1 inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+          Fine Tuning
+        </span>
+      </Button>
+    );
+  }
 
   const filteredModels = models.filter((m) =>
     m.toLowerCase().includes(modelSearch.toLowerCase()),

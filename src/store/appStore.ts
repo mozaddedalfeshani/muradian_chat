@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { OPENROUTER_API_KEY } from "../secret/api";
 
 interface AppState {
   hasCompletedSetup: boolean;
@@ -59,6 +60,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   thinking?: string;
+  model?: string;
 }
 
 export const useAppStore = create<AppState>()(
@@ -181,7 +183,12 @@ export const useAppStore = create<AppState>()(
         set((state) => ({ isSidebarOpen: !state.isSidebarOpen })),
 
       // Helpers
-      getApiKey: (provider) => get().apiKeys[provider] || "",
+      getApiKey: (provider) => {
+        const key = get().apiKeys[provider];
+        if (key) return key;
+        if (provider === "openrouter") return OPENROUTER_API_KEY || "";
+        return "";
+      },
 
       // Split View Actions
       enableSplitView: (chatId) =>
