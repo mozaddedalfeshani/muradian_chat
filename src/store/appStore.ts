@@ -367,13 +367,9 @@ export const useAppStore = create<AppState>()(
           currentChatId:
             pane === "primary" ? state.primaryChatId : state.secondaryChatId,
           activePane: "primary",
-          lastSplitState:
-            state.primaryChatId && state.secondaryChatId
-              ? {
-                  primaryChatId: state.primaryChatId,
-                  secondaryChatId: state.secondaryChatId,
-                }
-              : null,
+          secondaryChatId: null,
+          // Clear lastSplitState so clicking other chat doesn't restore split
+          lastSplitState: null,
         })),
     }),
     {
