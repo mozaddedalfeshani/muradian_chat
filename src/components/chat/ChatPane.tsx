@@ -433,12 +433,45 @@ Respond with ONLY one word: "CODING" or "GENERAL". Do not explain.`,
         if (!apiKey) {
           apiKey = OPENROUTER_API_KEY || "";
         }
-        const targetModel =
-          provider === "muradian" ? "google/gemini-2.0-flash-exp:free" : model;
 
-        if (apiKey) {
+        if (!apiKey || apiKey.includes("YOUR_KEY_HERE")) {
+          console.error("No valid API key for title generation");
+          return;
+        }
+
+        if (provider === "muradian") {
+          const modelsToTry = Array.from(
+            new Set(["google/gemini-2.0-flash-exp:free", ...FREE_MODELS]),
+          );
+          let success = false;
+
+          for (const modelToTry of modelsToTry) {
+            try {
+              title = ""; // Reset for new attempt
+              await chatWithOpenRouter(
+                modelToTry,
+                apiKey,
+                [{ role: "user", content: titlePrompt }],
+                (chunk) => {
+                  title += chunk;
+                },
+              );
+              if (title.trim()) {
+                success = true;
+                break;
+              }
+            } catch (e) {
+              console.warn(
+                `Muradian Auto Title: Model ${modelToTry} failed`,
+                e,
+              );
+            }
+          }
+          if (!success) return;
+        } else {
+          // Standard openrouter provider
           await chatWithOpenRouter(
-            targetModel,
+            model,
             apiKey,
             [{ role: "user", content: titlePrompt }],
             (chunk) => {
@@ -452,7 +485,9 @@ Respond with ONLY one word: "CODING" or "GENERAL". Do not explain.`,
       title = title
         .trim()
         .replace(/^["']|["']$/g, "")
+        .replace(/^[Tt]itle:\s*/, "") // Remove common prefixes
         .slice(0, 50);
+
       if (title) {
         updateChatTitle(chatId, title);
       }
