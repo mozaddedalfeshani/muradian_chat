@@ -161,15 +161,43 @@ export const useAppStore = create<AppState>()(
         set((state) => {
           const newChats = state.chats.filter((chat) => chat.id !== chatId);
           const isCurrentChat = state.currentChatId === chatId;
+          const isPrimaryChat = state.primaryChatId === chatId;
+          const isSecondaryChat = state.secondaryChatId === chatId;
+          const isInSplit = state.layout === "split";
 
+          // Handle split view deletion
+          if (isInSplit && (isPrimaryChat || isSecondaryChat)) {
+            if (isPrimaryChat) {
+              // Primary deleted: close split, secondary becomes new primary
+              return {
+                chats: newChats,
+                layout: "single",
+                primaryChatId: state.secondaryChatId,
+                secondaryChatId: null,
+                currentChatId: state.secondaryChatId,
+                activePane: "primary",
+                lastSplitState: null, // Clear last split state
+              };
+            } else {
+              // Secondary deleted: close split, keep primary
+              return {
+                chats: newChats,
+                layout: "single",
+                primaryChatId: state.primaryChatId,
+                secondaryChatId: null,
+                currentChatId: state.primaryChatId,
+                activePane: "primary",
+                lastSplitState: null, // Clear last split state
+              };
+            }
+          }
+
+          // Standard deletion (not in split or chat not visible)
           return {
             chats: newChats,
             currentChatId: isCurrentChat ? null : state.currentChatId,
-            primaryChatId:
-              state.primaryChatId === chatId ? null : state.primaryChatId,
-            secondaryChatId:
-              state.secondaryChatId === chatId ? null : state.secondaryChatId,
-            layout: state.secondaryChatId === chatId ? "single" : state.layout, // Close split if secondary deleted
+            primaryChatId: isPrimaryChat ? null : state.primaryChatId,
+            secondaryChatId: isSecondaryChat ? null : state.secondaryChatId,
             lastSplitState:
               state.lastSplitState &&
               (state.lastSplitState.primaryChatId === chatId ||
@@ -192,15 +220,23 @@ export const useAppStore = create<AppState>()(
 
       // Split View Actions
       enableSplitView: (chatId) =>
-        set((state) => ({
-          layout: "split",
-          secondaryChatId: chatId,
-          activePane: "secondary",
-          lastSplitState: {
-            primaryChatId: state.primaryChatId!,
+        set((state) => {
+          // Prevent same chat in both panes
+          if (chatId === state.primaryChatId) {
+            console.warn("Cannot split: chat is already in primary pane");
+            return {}; // No state change
+          }
+
+          return {
+            layout: "split",
             secondaryChatId: chatId,
-          },
-        })),
+            activePane: "secondary",
+            lastSplitState: {
+              primaryChatId: state.primaryChatId!,
+              secondaryChatId: chatId,
+            },
+          };
+        }),
 
       closeSplitView: () =>
         set((state) => ({
@@ -211,10 +247,22 @@ export const useAppStore = create<AppState>()(
         })),
 
       setPaneChat: (pane, chatId) =>
-        set({
-          [`${pane}ChatId`]: chatId,
-          currentChatId: chatId,
-          activePane: pane, // Automatically focus the pane we just set
+        set((state) => {
+          // Prevent same chat in both panes
+          if (pane === "primary" && chatId === state.secondaryChatId) {
+            console.warn("Cannot set: chat is already in secondary pane");
+            return {}; // No state change
+          }
+          if (pane === "secondary" && chatId === state.primaryChatId) {
+            console.warn("Cannot set: chat is already in primary pane");
+            return {}; // No state change
+          }
+
+          return {
+            [`${pane}ChatId`]: chatId,
+            currentChatId: chatId,
+            activePane: pane, // Automatically focus the pane we just set
+          };
         }),
 
       setActivePane: (pane) =>

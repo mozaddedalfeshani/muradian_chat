@@ -5,6 +5,7 @@ interface ChatHeaderProps {
   provider: string;
   model: string;
   onMaximize?: () => void;
+  isInSplitView?: boolean;
 }
 
 const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -12,9 +13,11 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   provider,
   model,
   onMaximize,
+  isInSplitView = false,
 }) => {
   return (
-    <header className="border-b bg-background p-4 flex items-center gap-3">
+    <header
+      className={`border-b p-4 flex items-center gap-3 ${isInSplitView ? "bg-primary/10" : "bg-background"}`}>
       <span className="text-2xl">🤖</span>
       <div className="flex-1">
         <h1 className="text-xl font-semibold leading-none">{title}</h1>

@@ -54,6 +54,15 @@ const ChatApp: React.FC = () => {
     const chatId = active.data.current?.chatId;
     if (!chatId) return;
 
+    // Prevent dragging a chat that's already open in split view
+    if (
+      layout === "split" &&
+      (chatId === primaryChatId || chatId === secondaryChatId)
+    ) {
+      console.warn("Cannot drag: chat is already open in split view");
+      return; // Prevent any action
+    }
+
     // If dropped on left zone, set as primary
     if (over.id === "drop-zone-left") {
       setPaneChat("primary", chatId);

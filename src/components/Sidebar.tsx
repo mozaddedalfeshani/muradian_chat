@@ -113,12 +113,23 @@ const DraggableChatItem: React.FC<DraggableChatItemProps> = ({
   onSelect,
   onDelete,
 }) => {
+  const { layout, primaryChatId, secondaryChatId } = useAppStore();
+
+  // Check if this chat is in split view
+  const isInSplit =
+    layout === "split" &&
+    (chat.id === primaryChatId || chat.id === secondaryChatId);
+
+  // Disable dragging if chat is already open in split view
+  const isDragDisabled = isInSplit;
+
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: chat.id,
     data: {
       type: "chat",
       chatId: chat.id,
     },
+    disabled: isDragDisabled,
   });
 
   return (
@@ -128,13 +139,17 @@ const DraggableChatItem: React.FC<DraggableChatItemProps> = ({
         isActive ? "bg-muted font-medium" : ""
       } ${!isSidebarOpen && "justify-center px-2"} ${
         isDragging ? "opacity-50" : ""
-      }`}>
+      } ${isInSplit ? "bg-primary/10 border-l-2 border-primary" : ""}`}>
       {/* Drag handle - only this element triggers drag */}
       <div
         {...listeners}
         {...attributes}
-        className="cursor-grab active:cursor-grabbing touch-none"
-        title="Drag to split view">
+        className={`${isDragDisabled ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing"} touch-none`}
+        title={
+          isDragDisabled
+            ? "Chat is already open in split view"
+            : "Drag to split view"
+        }>
         <MessageSquare className="h-4 w-4 shrink-0" />
       </div>
 
