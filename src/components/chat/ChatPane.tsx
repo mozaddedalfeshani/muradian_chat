@@ -29,12 +29,7 @@ const FREE_MODELS = [
   "mistralai/mistral-small-24b-instruct-2501:free",
 ];
 
-const ChatPane: React.FC<ChatPaneProps> = ({
-  chatId,
-  pane,
-  isActive,
-  onFocus,
-}) => {
+const ChatPane: React.FC<ChatPaneProps> = ({ chatId, isActive, onFocus }) => {
   const {
     chats,
     addChat,
@@ -47,7 +42,6 @@ const ChatPane: React.FC<ChatPaneProps> = ({
     provider: globalProvider,
     model: globalModel,
     layout,
-    maximizePane,
   } = useAppStore();
 
   const currentChat = chats.find((c) => c.id === chatId);

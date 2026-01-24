@@ -24,6 +24,11 @@ const Sidebar: React.FC = () => {
     isSidebarOpen,
     toggleSidebar,
     closeSplitView,
+    layout,
+    primaryChatId,
+    secondaryChatId,
+    activePane,
+    setActivePane,
   } = useAppStore();
   const { theme, setTheme } = useTheme();
 
@@ -56,17 +61,78 @@ const Sidebar: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-auto p-2 space-y-1">
-        {chats.map((chat) => (
-          <DraggableChatItem
-            key={chat.id}
-            chat={chat}
-            isActive={currentChatId === chat.id}
-            isSidebarOpen={isSidebarOpen}
-            onSelect={() => selectChat(chat.id)}
-            onDelete={() => deleteChat(chat.id)}
-            onCloseSplit={closeSplitView}
-          />
-        ))}
+        {/* Active Split View Container */}
+        {layout === "split" && primaryChatId && secondaryChatId && (
+          <div className="flex items-stretch gap-1 mb-2">
+            {[primaryChatId, secondaryChatId].map((id, index) => {
+              const chat = chats.find((c) => c.id === id);
+              if (!chat) return null;
+              const isPrimary = index === 0;
+              const isActivePane = isPrimary
+                ? activePane === "primary"
+                : activePane === "secondary";
+
+              return (
+                <div
+                  key={id}
+                  onClick={() =>
+                    setActivePane(isPrimary ? "primary" : "secondary")
+                  }
+                  className={`group flex-1 flex flex-col justify-center px-3 py-2 rounded-2xl text-xs cursor-pointer transition-all border border-transparent ${
+                    isActivePane
+                      ? "bg-primary/10 text-primary font-medium shadow-none border-primary/20"
+                      : "bg-muted/40 text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:border-border/30"
+                  }`}
+                  title={chat.title || "Untitled Chat"}>
+                  <div className="flex items-center justify-between w-full gap-1">
+                    <span className="truncate font-medium">
+                      {chat.title || "Untitled"}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteChat(chat.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-destructive transition-opacity"
+                        title="Delete Chat">
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          closeSplitView();
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-primary transition-opacity"
+                        title="Close Split View">
+                        <ChevronsLeft className="h-3 w-3 rotate-180" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {chats
+          .filter((chat) => {
+            if (layout === "split") {
+              return chat.id !== primaryChatId && chat.id !== secondaryChatId;
+            }
+            return true;
+          })
+          .map((chat) => (
+            <DraggableChatItem
+              key={chat.id}
+              chat={chat}
+              isActive={currentChatId === chat.id}
+              isSidebarOpen={isSidebarOpen}
+              onSelect={() => selectChat(chat.id)}
+              onDelete={() => deleteChat(chat.id)}
+              onCloseSplit={closeSplitView}
+            />
+          ))}
       </div>
 
       <div className="p-4 border-t flex flex-col gap-2">
