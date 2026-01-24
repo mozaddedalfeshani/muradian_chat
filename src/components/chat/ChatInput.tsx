@@ -3,14 +3,7 @@ import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Paperclip, ArrowUp, Book } from "lucide-react";
 import ModelSelector from "./ModelSelector";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "../ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface ChatInputProps {
   inputValue: string;
@@ -84,8 +77,8 @@ const ChatInput: React.FC<ChatInputProps> = ({
 
             <div className="h-4 w-[1px] bg-border mx-1" />
 
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
+            <Popover open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <PopoverTrigger asChild>
                 <Button
                   type="button"
                   variant="ghost"
@@ -94,32 +87,30 @@ const ChatInput: React.FC<ChatInputProps> = ({
                   title="Chat Rules">
                   <Book className="h-4 w-4" />
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="rounded-3xl border-border/50 bg-background/90 backdrop-blur-xl">
-                <DialogHeader>
-                  <DialogTitle>Chat Rules</DialogTitle>
-                </DialogHeader>
-                <div className="py-4">
-                  <p className="text-sm text-muted-foreground mb-4">
+              </PopoverTrigger>
+              <PopoverContent
+                side="top"
+                className="w-80 rounded-3xl border-border/50 bg-background/90 backdrop-blur-xl p-4 shadow-xl">
+                <div className="flex flex-col gap-3">
+                  <h4 className="font-semibold leading-none">Chat Rules</h4>
+                  <p className="text-sm text-muted-foreground">
                     Set specific instructions for this chat.
                   </p>
                   <Textarea
                     value={localRules}
                     onChange={(e) => setLocalRules(e.target.value)}
                     placeholder="E.g., 'Be concise', 'Use Python'..."
-                    className="min-h-[150px] bg-muted/50 border-border/50 rounded-2xl focus-visible:ring-primary/50"
+                    className="min-h-[100px] bg-muted/50 border-border/50 rounded-2xl focus-visible:ring-primary/50 text-sm"
                   />
-                </div>
-                <DialogFooter>
                   <Button
                     onClick={handleSaveRules}
                     type="button"
-                    className="rounded-xl">
+                    className="rounded-xl w-full">
                     Save Rules
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <Button
               type="button"

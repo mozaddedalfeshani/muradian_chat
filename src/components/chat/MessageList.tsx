@@ -26,6 +26,7 @@ interface MessageListProps {
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
   onRegenerateFromPoint?: (index: number, newContent: string) => void;
   onAskThis?: (text: string) => void;
+  layout?: "single" | "split";
 }
 
 interface SelectionPopup {
@@ -44,6 +45,7 @@ const MessageList: React.FC<MessageListProps> = ({
   messagesEndRef,
   onRegenerateFromPoint,
   onAskThis,
+  layout = "single",
 }) => {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -211,7 +213,8 @@ const MessageList: React.FC<MessageListProps> = ({
         <div
           key={i}
           className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate__animated animate__fadeIn animate__faster group`}>
-          <div className="md:relative w-full md:max-w-[65%]">
+          <div
+            className={`md:relative w-full ${layout === "split" ? "max-w-full" : "md:max-w-[65%]"}`}>
             {editingIndex === i ? (
               <div className="flex flex-col gap-2">
                 <textarea
@@ -319,7 +322,8 @@ const MessageList: React.FC<MessageListProps> = ({
       ))}
       {loading && (streamingContent || streamingThinking) && (
         <div className="flex justify-start animate__animated animate__fadeIn animate__faster">
-          <div className="relative w-full md:max-w-[65%]">
+          <div
+            className={`relative w-full ${layout === "split" ? "max-w-full" : "md:max-w-[65%]"}`}>
             <div
               data-ai-message="true"
               className="w-full bg-background/40 dark:bg-muted/20 backdrop-blur-md border border-border/40 rounded-3xl rounded-tl-sm px-6 py-4 prose dark:prose-invert prose-base break-words max-w-none rainbow-glow-border">
@@ -365,7 +369,8 @@ const MessageList: React.FC<MessageListProps> = ({
       )}
       {loading && !streamingContent && (
         <div className="flex justify-start animate__animated animate__fadeIn">
-          <div className="bg-muted/30 backdrop-blur-sm rounded-3xl rounded-tl-sm px-6 py-4 w-full md:max-w-[65%] space-y-3 rainbow-glow-border border border-border/40">
+          <div
+            className={`bg-muted/30 backdrop-blur-sm rounded-3xl rounded-tl-sm px-6 py-4 w-full ${layout === "split" ? "max-w-full" : "md:max-w-[65%]"} space-y-3 rainbow-glow-border border border-border/40`}>
             {thinkingStatus && (
               <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
                 <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse" />

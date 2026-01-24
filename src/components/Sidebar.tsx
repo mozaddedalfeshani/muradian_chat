@@ -23,6 +23,7 @@ const Sidebar: React.FC = () => {
     deleteChat,
     isSidebarOpen,
     toggleSidebar,
+    closeSplitView,
   } = useAppStore();
   const { theme, setTheme } = useTheme();
 
@@ -63,6 +64,7 @@ const Sidebar: React.FC = () => {
             isSidebarOpen={isSidebarOpen}
             onSelect={() => selectChat(chat.id)}
             onDelete={() => deleteChat(chat.id)}
+            onCloseSplit={closeSplitView}
           />
         ))}
       </div>
@@ -106,6 +108,7 @@ interface DraggableChatItemProps {
   isSidebarOpen: boolean;
   onSelect: () => void;
   onDelete: () => void;
+  onCloseSplit: () => void;
 }
 
 const DraggableChatItem: React.FC<DraggableChatItemProps> = ({
@@ -114,6 +117,7 @@ const DraggableChatItem: React.FC<DraggableChatItemProps> = ({
   isSidebarOpen,
   onSelect,
   onDelete,
+  onCloseSplit,
 }) => {
   const { layout, primaryChatId, secondaryChatId } = useAppStore();
 
@@ -166,6 +170,19 @@ const DraggableChatItem: React.FC<DraggableChatItemProps> = ({
         title={chat.title || "Untitled Chat"}>
         <span className="truncate">{chat.title || "Untitled Chat"}</span>
       </button>
+
+      {/* Close Split View button */}
+      {isSidebarOpen && isInSplit && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onCloseSplit();
+          }}
+          className="opacity-0 group-hover:opacity-100 p-1 hover:text-primary transition-opacity mr-1"
+          title="Close Split View">
+          <ChevronsLeft className="h-4 w-4 rotate-180" />
+        </button>
+      )}
 
       {/* Delete button */}
       {isSidebarOpen && (

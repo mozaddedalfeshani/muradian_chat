@@ -689,6 +689,7 @@ Respond with ONLY the category name (CODING, MATH, SCIENCE, CREATIVE, ANALYSIS, 
           messagesEndRef={messagesEndRef}
           onRegenerateFromPoint={handleRegenerateFromPoint}
           onAskThis={(text) => setInputValue(text)}
+          layout={layout}
         />
       </div>
 
