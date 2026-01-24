@@ -211,7 +211,7 @@ const MessageList: React.FC<MessageListProps> = ({
         <div
           key={i}
           className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate__animated animate__fadeIn animate__faster group`}>
-          <div className="relative max-w-[90%]">
+          <div className="relative max-w-[80%]">
             {editingIndex === i ? (
               <div className="flex flex-col gap-2">
                 <textarea
@@ -319,7 +319,7 @@ const MessageList: React.FC<MessageListProps> = ({
       ))}
       {loading && (streamingContent || streamingThinking) && (
         <div className="flex justify-start animate__animated animate__fadeIn animate__faster">
-          <div className="relative max-w-[90%]">
+          <div className="relative max-w-[80%]">
             <div
               data-ai-message="true"
               className="w-full bg-muted rounded-lg px-4 py-2 prose dark:prose-invert prose-sm break-words max-w-none rainbow-glow-border">
@@ -365,7 +365,7 @@ const MessageList: React.FC<MessageListProps> = ({
       )}
       {loading && !streamingContent && (
         <div className="flex justify-start animate__animated animate__fadeIn">
-          <div className="bg-muted rounded-lg px-4 py-3 max-w-[90%] space-y-2 rainbow-glow-border">
+          <div className="bg-muted rounded-lg px-4 py-3 max-w-[80%] space-y-2 rainbow-glow-border">
             {thinkingStatus && (
               <div className="text-sm text-muted-foreground mb-2 flex items-center gap-2">
                 <span className="inline-block w-2 h-2 bg-primary rounded-full animate-pulse" />

@@ -28,11 +28,11 @@ const ChatInput: React.FC<ChatInputProps> = ({
   handleStop,
 }) => {
   return (
-    <div className="p-4 bg-background">
+    <div className="p-2 bg-background">
       <div className="w-full">
         <form
           onSubmit={handleSend}
-          className="flex flex-col gap-2 bg-muted/50 rounded-2xl p-4 border border-border/50 focus-within:ring-1 focus-within:ring-ring transition-all">
+          className="flex items-center gap-2 bg-muted/50 rounded-xl p-2 pl-4 border border-border/50 focus-within:ring-1 focus-within:ring-ring transition-all">
           <Textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -42,67 +42,46 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 handleSend(e);
               }
             }}
-            placeholder="Message DeepSeek"
-            className="min-h-[60px] max-h-[200px] border-none bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 shadow-none text-base"
+            placeholder="Write your message here..."
+            className="flex-1 min-h-[40px] max-h-[120px] border-none bg-transparent resize-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0 shadow-none text-base py-2"
             autoFocus
           />
 
-          <div className="flex justify-between items-end">
-            <div className="flex gap-2">
-              {/* <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full h-8 px-3 text-xs gap-1.5 font-medium border-border/50 bg-background/50 hover:bg-background/80">
-                        <Brain className="h-3.5 w-3.5" />
-                        DeepThink
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full h-8 px-3 text-xs gap-1.5 font-medium border-border/50 bg-background/50 hover:bg-background/80">
-                        <Globe className="h-3.5 w-3.5" />
-                        Search
-                      </Button> */}
-            </div>
+          <div className="flex items-center gap-1 pr-1">
+            <ModelSelector
+              provider={provider}
+              model={model}
+              models={models}
+              setModel={setModel}
+            />
 
-            <div className="flex gap-2 items-center">
-              <ModelSelector
-                provider={provider}
-                model={model}
-                models={models}
-                setModel={setModel}
-              />
-
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="rounded-full h-8 w-8 text-muted-foreground hover:bg-muted">
+              <Paperclip className="h-4 w-4" />
+            </Button>
+            {loading ? (
               <Button
                 type="button"
-                variant="ghost"
-                size="icon"
-                className="rounded-full h-8 w-8 text-muted-foreground hover:bg-muted">
-                <Paperclip className="h-4 w-4" />
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (handleStop) handleStop();
+                }}
+                className="rounded-full h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white">
+                <div className="h-3 w-3 bg-current rounded-[2px]" />
+                <span className="sr-only">Stop</span>
               </Button>
-              {loading ? (
-                <Button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (handleStop) handleStop();
-                  }}
-                  className="rounded-full h-8 w-8 p-0 bg-red-500 hover:bg-red-600 text-white">
-                  <div className="h-3 w-3 bg-current rounded-[2px]" />
-                  <span className="sr-only">Stop</span>
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  disabled={!inputValue.trim()}
-                  className="rounded-full h-8 w-8 p-0">
-                  <ArrowUp className="h-4 w-4" />
-                  <span className="sr-only">Send</span>
-                </Button>
-              )}
-            </div>
+            ) : (
+              <Button
+                type="submit"
+                disabled={!inputValue.trim()}
+                className="rounded-full h-8 w-8 p-0">
+                <ArrowUp className="h-4 w-4" />
+                <span className="sr-only">Send</span>
+              </Button>
+            )}
           </div>
         </form>
 

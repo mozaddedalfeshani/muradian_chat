@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useAppStore, type Message } from "../../store/appStore";
 import { invoke } from "@tauri-apps/api/core";
-import ChatHeader from "./ChatHeader";
+
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import { chatWithOllama } from "../../lib/ollamaChat";
@@ -612,14 +612,6 @@ Respond with ONLY the category name (CODING, MATH, SCIENCE, CREATIVE, ANALYSIS, 
       <div
         className={`flex-1 flex flex-col h-full relative border-l ${isActive ? "ring-2 ring-primary/10" : ""}`}
         onClick={onFocus}>
-        <ChatHeader
-          title="MOSP Chat"
-          provider={provider}
-          model={model}
-          onMaximize={layout === "split" ? () => maximizePane(pane) : undefined}
-          isInSplitView={layout === "split"}
-        />
-
         <div className="flex-1 overflow-auto p-4 space-y-4">
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
             <span className="text-4xl mb-4">💬</span>
@@ -645,14 +637,6 @@ Respond with ONLY the category name (CODING, MATH, SCIENCE, CREATIVE, ANALYSIS, 
     <div
       className={`flex-1 flex flex-col h-full relative border-l ${isActive ? "ring-2 ring-primary/10" : ""}`}
       onClick={onFocus}>
-      <ChatHeader
-        title={currentChat?.title}
-        provider={provider}
-        model={model}
-        onMaximize={layout === "split" ? () => maximizePane(pane) : undefined}
-        isInSplitView={layout === "split"}
-      />
-
       <div className="flex-1 overflow-auto p-4 space-y-4 relative">
         {setupProgress && (
           <div className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b p-2 mb-2 flex items-center justify-center gap-2 animate-in slide-in-from-top-2">
